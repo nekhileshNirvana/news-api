@@ -17,6 +17,22 @@ router.get("/articles", (req, res) => {
   });
 });
 
+router.get("/articles/:category", (req, res) => {
+  const category = req.params.category;
+  const query = "SELECT * FROM articles WHERE category = ?";
+
+  connection.query(query, [category], (err, results) => {
+    if (err) {
+      console.error("Error executing MySQL query:", err);
+      res.status(500).json({ error: "Error retrieving data from MySQL" });
+      return;
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+
 router.post("/articles", (req, res) => {
     const { author, content, description, publishedAt, title, url, urlToImage, country, category, language, source } = req.body;
   
