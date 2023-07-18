@@ -10,6 +10,7 @@ const countryRoute = require('./country/countryRoute');
 const articlesRoute = require('./articles/articlesRoute');
 const categoryRoute = require('./category/categoryRoute');
 const sourceRoute = require('./source/sourceRoute');
+const User = require('./user');
 
 const app = express();
 const PORT = 8080;
@@ -47,28 +48,30 @@ passport.use(
       // You can customize this function according to your needs
       
       // Assuming you have a User model/schema, you can create or find the user
-      User.findOne({ googleId: profile.id }, (err, user) => {
-        if (err) {
-          return done(err);
-        }
+      User.findOne({ where: { googleId: profile.id } }) // <-- Use `where` option
+      .then((user) => {
         if (user) {
           // User already exists, update the access token or other relevant information if needed
           user.accessToken = accessToken;
-          user.save();
+          return user.save(); // Use `return` to handle the promise chain
         } else {
           // User does not exist, create a new user with the necessary information
-          const newUser = new User({
+          return User.create({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
             accessToken: accessToken
           });
-          newUser.save();
         }
-        
+      })
+      .then((user) => {
         // Call 'done' to proceed after authentication, passing the authenticated user as the second parameter
         done(null, user);
-      });
+      })
+      .catch((err) => {
+        // Handle errors here
+        done(err);
+      }); 
     }
   )
 );
@@ -81,6 +84,17 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((user, done) => {
   done(null, user);
+});
+
+app.get('/dashboard', (req, res) => {
+  // Check if the user is authenticated, you can use req.isAuthenticated() method
+  // If the user is authenticated, you can render the dashboard page
+  // If not, you can redirect the user to the login page or handle it as per your application's requirements
+  if (req.isAuthenticated()) {
+    res.redirect('http://localhost:3000/'); // Replace this with your actual dashboard rendering logic
+  } else {
+    res.send('Error user not defined'); // Redirect to login page or handle it according to your needs
+  }
 });
 
 // Implement the Google OAuth 2.0 authentication route
@@ -108,4 +122,4 @@ app.use('/', sourceRoute);
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
-});
+}); 
