@@ -1,0 +1,1 @@
+1. when starting a new project, we don't have database and tables in mysql. solve this problem first.
